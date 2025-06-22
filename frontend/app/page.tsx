@@ -38,9 +38,20 @@ export default function Home() {
       timestamp: new Date()
     }
 
-    setMessages(prev => [...prev, userMessage])
-    setInputMessage('')
-    setIsLoading(true)
+    // Create a placeholder for the assistant's response
+    const assistantMessageId = (Date.now() + 1).toString();
+    const placeholderMessage: Message = {
+      id: assistantMessageId,
+      content: '', // This will be filled by the stream or an error
+      role: 'assistant',
+      timestamp: new Date()
+    };
+    
+    const messageToSend = inputMessage;
+    // Add both user message and placeholder to the state, and clear the input
+    setMessages(prev => [...prev, userMessage, placeholderMessage]);
+    setInputMessage('');
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/chat', {
@@ -50,56 +61,57 @@ export default function Home() {
         },
         body: JSON.stringify({
           developer_message: developerMessage,
-          user_message: inputMessage,
+          user_message: messageToSend,
           model: 'gpt-4.1-mini',
           api_key: apiKey
         })
       })
 
       if (!response.ok) {
-        throw new Error('Failed to get response')
+        // Try to get a specific error message from the backend
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || `The server responded with status ${response.status}.`);
       }
 
       const reader = response.body?.getReader()
-      if (!reader) throw new Error('No reader available')
+      if (!reader) throw new Error('Could not get a reader from the response body.');
 
-      let assistantMessage = ''
-      const assistantMessageId = (Date.now() + 1).toString()
-
-      // Add initial assistant message
-      const initialAssistantMessage: Message = {
-        id: assistantMessageId,
-        content: '',
-        role: 'assistant',
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, initialAssistantMessage])
+      let assistantMessageContent = ''
+      let messageReceived = false
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
         const chunk = new TextDecoder().decode(value)
-        assistantMessage += chunk
+        assistantMessageContent += chunk
+        if(chunk.trim().length > 0) {
+            messageReceived = true
+        }
 
-        // Update the assistant message
+        // Update the assistant message in real-time
         setMessages(prev => 
           prev.map(msg => 
             msg.id === assistantMessageId 
-              ? { ...msg, content: assistantMessage }
+              ? { ...msg, content: assistantMessageContent }
               : msg
           )
         )
       }
-    } catch (error) {
-      console.error('Error:', error)
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        content: 'Sorry, there was an error processing your request. Please check your API key and try again.',
-        role: 'assistant',
-        timestamp: new Date()
+
+      if (!messageReceived) {
+        throw new Error('The API returned an empty response. This may be due to an invalid API key or lack of credits.');
       }
-      setMessages(prev => [...prev, errorMessage])
+    } catch (error: any) {
+      console.error('Error during chat:', error);
+      // Update the placeholder with a helpful error message
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === assistantMessageId
+            ? { ...msg, content: `⚠️ **An error occurred.**\n\nPlease check your API key and network connection.\n\n*Details: ${error.message}*` }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false)
     }
