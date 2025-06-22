@@ -60,6 +60,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          'Space Grotesk',
           '-apple-system',
           'BlinkMacSystemFont',
           'Segoe UI',
@@ -71,18 +72,19 @@ module.exports = {
         ],
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-        'slide-up': 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        'fade-in': 'fadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        'slide-up': 'slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         'scale-in': 'scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         'bounce-gentle': 'bounceGentle 2s infinite',
+        'background-pan': 'background-pan 15s ease infinite',
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '0%': { opacity: '0', transform: 'scale(0.98)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
         },
         slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '0%': { transform: 'translateY(15px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
         scaleIn: {
@@ -93,6 +95,11 @@ module.exports = {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
         },
+        'background-pan': {
+          '0%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 50%' },
+          '100%': { 'background-position': '0% 50%' },
+        }
       },
       backdropBlur: {
         xs: '2px',

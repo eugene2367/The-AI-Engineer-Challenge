@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Settings, Key, Sparkles, MessageCircle, Info } from 'lucide-react'
+import { Send, Bot, User, Settings, Key, Sparkles, MessageCircle, Info, Cpu, X } from 'lucide-react'
 
 interface Message {
   id: string
@@ -13,7 +13,7 @@ interface Message {
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
-  const [developerMessage, setDeveloperMessage] = useState('You are a helpful AI assistant.')
+  const [developerMessage, setDeveloperMessage] = useState('You are a helpful AI assistant operating in a futuristic, high-tech interface.')
   const [apiKey, setApiKey] = useState('')
   const [projectId, setProjectId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -39,17 +39,15 @@ export default function Home() {
       timestamp: new Date()
     }
 
-    // Create a placeholder for the assistant's response
     const assistantMessageId = (Date.now() + 1).toString();
     const placeholderMessage: Message = {
       id: assistantMessageId,
-      content: '', // This will be filled by the stream or an error
+      content: '',
       role: 'assistant',
       timestamp: new Date()
     };
     
     const messageToSend = inputMessage;
-    // Add both user message and placeholder to the state, and clear the input
     setMessages(prev => [...prev, userMessage, placeholderMessage]);
     setInputMessage('');
     setIsLoading(true);
@@ -70,9 +68,8 @@ export default function Home() {
       })
 
       if (!response.ok) {
-        // Try to get a specific error message from the backend
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.detail || `The server responded with status ${response.status}.`);
+        throw new Error(errorData?.detail || `Server responded with status ${response.status}.`);
       }
 
       const reader = response.body?.getReader()
@@ -91,7 +88,6 @@ export default function Home() {
             messageReceived = true
         }
 
-        // Update the assistant message in real-time
         setMessages(prev => 
           prev.map(msg => 
             msg.id === assistantMessageId 
@@ -102,15 +98,14 @@ export default function Home() {
       }
 
       if (!messageReceived) {
-        throw new Error('The API returned an empty response. This may be due to an invalid API key or lack of credits.');
+        throw new Error('API returned an empty response. Check your API key, project ID, and credits.');
       }
     } catch (error: any) {
       console.error('Error during chat:', error);
-      // Update the placeholder with a helpful error message
       setMessages(prev =>
         prev.map(msg =>
           msg.id === assistantMessageId
-            ? { ...msg, content: `⚠️ **An error occurred.**\n\nPlease check your API key and network connection.\n\n*Details: ${error.message}*` }
+            ? { ...msg, content: `⚠️ **SYSTEM ERROR**\n\n**TRANSMISSION FAILED:**\n\`\`\`\n${error.message}\n\`\`\`\nPlease verify API key, Project ID, and network link.` }
             : msg
         )
       );
@@ -120,25 +115,25 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen">
       <div className="chat-container">
         {/* Header */}
         <header className="chat-header">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Sparkles className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600/80 to-slate-800/80 rounded-2xl flex items-center justify-center shadow-lg border border-slate-700">
+                <Cpu className="w-6 h-6 text-blue-300 animate-pulse" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900 tracking-tight">AI Chat</h1>
-                <p className="text-sm text-gray-500 font-medium">Powered by GPT-4.1-mini</p>
+                <h1 className="text-xl font-bold text-slate-100 tracking-tight">AI Mainframe</h1>
+                <p className="text-sm text-blue-400 font-medium">ONLINE</p>
               </div>
             </div>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-3 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-2xl transition-all duration-200 group"
+              className="p-3 text-slate-400 hover:text-blue-400 hover:bg-slate-800/50 rounded-2xl transition-all duration-200 group"
             >
-              <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+              <Settings className={`w-5 h-5 transition-transform duration-500 ${showSettings ? 'rotate-180' : ''}`} />
             </button>
           </div>
         </header>
@@ -146,25 +141,30 @@ export default function Home() {
         {/* Settings Panel */}
         {showSettings && (
           <div className="settings-panel">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-slate-200">System Configuration</h2>
+              <button onClick={() => setShowSettings(false)} className="p-2 text-slate-400 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <Key className="w-4 h-4 mr-2 text-blue-500" />
+                <label className="block text-sm font-semibold text-slate-300 mb-3 flex items-center">
+                  <Key className="w-4 h-4 mr-2 text-blue-400" />
                   OpenAI API Key
                 </label>
                 <input
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-..."
+                  placeholder="sk-proj-..."
                   className="settings-input"
                 />
-                <p className="text-xs text-gray-500 mt-2">Your API key is never stored on our servers</p>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <Info className="w-4 h-4 mr-2 text-blue-500" />
-                  OpenAI Project ID (Optional)
+               <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-3 flex items-center">
+                  <Info className="w-4 h-4 mr-2 text-blue-400" />
+                  OpenAI Project ID
                 </label>
                 <input
                   type="text"
@@ -173,11 +173,10 @@ export default function Home() {
                   placeholder="proj_..."
                   className="settings-input"
                 />
-                <p className="text-xs text-gray-500 mt-2">Required if you are using a Project API Key.</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  System Message
+                <label className="block text-sm font-semibold text-slate-300 mb-3">
+                  System Directive
                 </label>
                 <textarea
                   value={developerMessage}
@@ -186,7 +185,6 @@ export default function Home() {
                   rows={3}
                   className="settings-textarea"
                 />
-                <p className="text-xs text-gray-500 mt-2">Customize how the AI behaves</p>
               </div>
             </div>
           </div>
@@ -197,11 +195,11 @@ export default function Home() {
           {messages.length === 0 && (
             <div className="welcome-container">
               <div className="welcome-icon">
-                <MessageCircle className="w-10 h-10 text-white" />
+                <Sparkles className="w-10 h-10 text-blue-400" />
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-3 tracking-tight">Welcome to AI Chat</h3>
-              <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-                Start a conversation with AI. Set your API key in the settings to begin chatting.
+              <h3 className="text-2xl font-semibold text-slate-100 mb-3 tracking-tight">AI Mainframe Initialized</h3>
+              <p className="text-slate-400 max-w-md mx-auto leading-relaxed">
+                System online. Awaiting input. Configure API credentials in the settings panel.
               </p>
             </div>
           )}
@@ -214,19 +212,19 @@ export default function Home() {
               <div className={`chat-message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}>
                 <div className="flex items-start space-x-3">
                   {message.role === 'assistant' && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <Bot className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600/80 to-slate-800/80 rounded-full flex items-center justify-center flex-shrink-0 mt-1 border border-slate-700">
+                      <Bot className="w-4 h-4 text-blue-300" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                    <p className="whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: message.content.replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>') }}></p>
                     <p className="message-time">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                   {message.role === 'user' && (
-                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-sm">
-                      <User className="w-4 h-4 text-blue-500" />
+                    <div className="w-8 h-8 bg-slate-800/80 rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-sm border border-slate-700">
+                      <User className="w-4 h-4 text-blue-300" />
                     </div>
                   )}
                 </div>
@@ -238,13 +236,13 @@ export default function Home() {
             <div className="flex justify-start">
               <div className="chat-message assistant-message">
                 <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <Bot className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-slate-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1 border-slate-700">
+                    <Bot className="w-4 h-4 text-blue-300" />
                   </div>
                   <div className="typing-indicator">
-                    <div className="typing-dot"></div>
                     <div className="typing-dot" style={{ animationDelay: '0.1s' }}></div>
                     <div className="typing-dot" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="typing-dot" style={{ animationDelay: '0.3s' }}></div>
                   </div>
                 </div>
               </div>
@@ -261,7 +259,7 @@ export default function Home() {
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Type a message..."
+              placeholder="Transmit message..."
               disabled={isLoading || !apiKey.trim()}
               className="message-input"
             />
@@ -275,9 +273,10 @@ export default function Home() {
           </form>
           
           {!apiKey.trim() && (
-            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-2xl">
-              <p className="text-sm text-amber-700 font-medium">
-                ⚠️ Please set your OpenAI API key in the settings to start chatting.
+            <div className="mt-3 p-3 bg-amber-900/50 border border-amber-500/30 rounded-2xl">
+              <p className="text-sm text-amber-300 font-medium flex items-center">
+                <Info size={16} className="mr-2 flex-shrink-0" />
+                SYSTEM OFFLINE: API credentials required for connection.
               </p>
             </div>
           )}
