@@ -4,21 +4,33 @@
 
 @layer base {
   html {
-    font-family: system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+  
+  body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   }
 }
 
 @layer components {
+  .chat-container {
+    @apply max-w-4xl mx-auto h-screen flex flex-col bg-white/80 backdrop-blur-xl;
+  }
+  
+  .chat-header {
+    @apply bg-white/90 backdrop-blur-xl border-b border-gray-200/50 px-6 py-4 shadow-sm;
+  }
+  
   .chat-message {
-    @apply p-4 rounded-lg max-w-[80%] animate-slide-up;
+    @apply p-4 rounded-2xl max-w-[85%] animate-slide-up shadow-sm;
   }
   
   .user-message {
-    @apply bg-primary-500 text-white ml-auto;
+    @apply bg-blue-500 text-white ml-auto shadow-lg shadow-blue-500/25;
   }
   
   .assistant-message {
-    @apply bg-gray-100 text-gray-900;
+    @apply bg-gray-50 text-gray-900 border border-gray-100;
   }
   
   .typing-indicator {
@@ -28,22 +40,120 @@
   .typing-dot {
     @apply w-2 h-2 bg-gray-400 rounded-full animate-pulse;
   }
+  
+  .input-container {
+    @apply bg-white/90 backdrop-blur-xl border-t border-gray-200/50 px-6 py-4;
+  }
+  
+  .message-input {
+    @apply flex-1 px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 bg-white/80 backdrop-blur-sm;
+  }
+  
+  .send-button {
+    @apply px-6 py-3 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30;
+  }
+  
+  .settings-panel {
+    @apply bg-white/95 backdrop-blur-xl border-b border-gray-200/50 px-6 py-4 animate-slide-up;
+  }
+  
+  .settings-input {
+    @apply w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm;
+  }
+  
+  .settings-textarea {
+    @apply w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm resize-none;
+  }
+  
+  .welcome-container {
+    @apply text-center py-16 px-6;
+  }
+  
+  .welcome-icon {
+    @apply w-20 h-20 text-gray-300 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-lg;
+  }
+  
+  .message-bubble {
+    @apply relative;
+  }
+  
+  .message-time {
+    @apply text-xs opacity-60 mt-2 font-medium;
+  }
+  
+  .user-message .message-time {
+    @apply text-blue-100;
+  }
+  
+  .assistant-message .message-time {
+    @apply text-gray-500;
+  }
 }
 
-/* Custom scrollbar */
+@layer utilities {
+  .animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Custom scrollbar - Apple style */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 } 
