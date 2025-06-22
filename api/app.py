@@ -29,13 +29,17 @@ class ChatRequest(BaseModel):
     user_message: str      # Message from the user
     model: Optional[str] = "gpt-4.1-mini"  # Optional model selection with default
     api_key: str          # OpenAI API key for authentication
+    project_id: Optional[str] = None # OpenAI project ID
 
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     try:
         # Initialize OpenAI client with the provided API key
-        client = OpenAI(api_key=request.api_key)
+        client = OpenAI(
+            api_key=request.api_key,
+            project=request.project_id,
+        )
         
         # Create an async generator function for streaming responses
         async def generate():

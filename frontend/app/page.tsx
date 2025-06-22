@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Settings, Key, Sparkles, MessageCircle } from 'lucide-react'
+import { Send, Bot, User, Settings, Key, Sparkles, MessageCircle, Info } from 'lucide-react'
 
 interface Message {
   id: string
@@ -15,6 +15,7 @@ export default function Home() {
   const [inputMessage, setInputMessage] = useState('')
   const [developerMessage, setDeveloperMessage] = useState('You are a helpful AI assistant.')
   const [apiKey, setApiKey] = useState('')
+  const [projectId, setProjectId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -63,7 +64,8 @@ export default function Home() {
           developer_message: developerMessage,
           user_message: messageToSend,
           model: 'gpt-4.1-mini',
-          api_key: apiKey
+          api_key: apiKey,
+          project_id: projectId,
         })
       })
 
@@ -158,6 +160,20 @@ export default function Home() {
                   className="settings-input"
                 />
                 <p className="text-xs text-gray-500 mt-2">Your API key is never stored on our servers</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                  <Info className="w-4 h-4 mr-2 text-blue-500" />
+                  OpenAI Project ID (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  placeholder="proj_..."
+                  className="settings-input"
+                />
+                <p className="text-xs text-gray-500 mt-2">Required if you are using a Project API Key.</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
