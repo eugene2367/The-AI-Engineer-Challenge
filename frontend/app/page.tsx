@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Settings, Key, Sparkles, MessageCircle, Info, Cpu, X } from 'lucide-react'
+import FileUpload from './components/FileUpload'
 
 interface Message {
   id: string
@@ -12,12 +13,13 @@ interface Message {
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([])
-  const [inputMessage, setInputMessage] = useState('')
+  const [input, setInput] = useState('')
   const [developerMessage, setDeveloperMessage] = useState('You are a helpful AI assistant operating in a futuristic, high-tech interface.')
   const [apiKey, setApiKey] = useState('')
   const [projectId, setProjectId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -28,87 +30,118 @@ export default function Home() {
     scrollToBottom()
   }, [messages])
 
+  const handleFileProcessed = (success: boolean, documentId?: string) => {
+    if (success && documentId) {
+      setCurrentDocumentId(documentId)
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        content: 'Document uploaded successfully! You can now ask questions about its contents.',
+        role: 'assistant',
+        timestamp: new Date()
+      }])
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!inputMessage.trim() || !apiKey.trim()) return
+    if (!input.trim() || isLoading) return
 
-    const userMessage: Message = {
+    const userMessage = input.trim()
+    setInput('')
+    setMessages(prev => [...prev, {
       id: Date.now().toString(),
-      content: inputMessage,
+      content: userMessage,
       role: 'user',
       timestamp: new Date()
-    }
-
-    const assistantMessageId = (Date.now() + 1).toString();
-    const placeholderMessage: Message = {
-      id: assistantMessageId,
-      content: '',
-      role: 'assistant',
-      timestamp: new Date()
-    };
-    
-    const messageToSend = inputMessage;
-    setMessages(prev => [...prev, userMessage, placeholderMessage]);
-    setInputMessage('');
-    setIsLoading(true);
+    }])
+    setIsLoading(true)
 
     try {
-      const response = await fetch('/api/chat', {
+      const endpoint = currentDocumentId ? '/api/query' : '/api/chat'
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          developer_message: developerMessage,
-          user_message: messageToSend,
-          model: 'gpt-4.1-mini',
-          api_key: apiKey,
-          project_id: projectId,
-        })
+        body: JSON.stringify(currentDocumentId ? {
+          query: userMessage,
+          document_id: currentDocumentId
+        } : {
+          messages: messages.concat({
+            id: Date.now().toString(),
+            content: userMessage,
+            role: 'user',
+            timestamp: new Date()
+          })
+        }),
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.detail || `Server responded with status ${response.status}.`);
+        throw new Error('Failed to get response')
       }
 
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error('Could not get a reader from the response body.');
+      if (response.headers.get('content-type')?.includes('text/event-stream')) {
+        // Handle streaming response
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let assistantMessage = ''
 
-      let assistantMessageContent = ''
-      let messageReceived = false
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          content: '',
+          role: 'assistant',
+          timestamp: new Date()
+        }])
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        while (reader) {
+          const { value, done } = await reader.read()
+          if (done) break
 
-        const chunk = new TextDecoder().decode(value)
-        assistantMessageContent += chunk
-        if(chunk.trim().length > 0) {
-            messageReceived = true
+          const chunk = decoder.decode(value)
+          const lines = chunk.split('\n')
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(5)
+              if (data === '[DONE]') continue
+
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.token) {
+                  assistantMessage += parsed.token
+                  setMessages(prev => [
+                    ...prev.slice(0, -1),
+                    {
+                      id: Date.now().toString(),
+                      content: assistantMessage,
+                      role: 'assistant',
+                      timestamp: new Date()
+                    }
+                  ])
+                }
+              } catch (e) {
+                console.error('Failed to parse chunk:', e)
+              }
+            }
+          }
         }
-
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === assistantMessageId 
-              ? { ...msg, content: assistantMessageContent }
-              : msg
-          )
-        )
+      } else {
+        const data = await response.json()
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          content: data.response,
+          role: 'assistant',
+          timestamp: new Date()
+        }])
       }
-
-      if (!messageReceived) {
-        throw new Error('API returned an empty response. Check your API key, project ID, and credits.');
-      }
-    } catch (error: any) {
-      console.error('Error during chat:', error);
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === assistantMessageId
-            ? { ...msg, content: `⚠️ **SYSTEM ERROR**\n\n**TRANSMISSION FAILED:**\n\`\`\`\n${error.message}\n\`\`\`\nPlease verify API key, Project ID, and network link.` }
-            : msg
-        )
-      );
+    } catch (error) {
+      console.error('Error:', error)
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        content: 'Sorry, I encountered an error. Please try again.',
+        role: 'assistant',
+        timestamp: new Date()
+      }])
     } finally {
       setIsLoading(false)
     }
@@ -190,6 +223,9 @@ export default function Home() {
           </div>
         )}
 
+        {/* File Upload */}
+        <FileUpload onFileProcessed={handleFileProcessed} />
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {messages.length === 0 && (
@@ -257,15 +293,17 @@ export default function Home() {
           <form onSubmit={handleSubmit} className="flex space-x-3">
             <input
               type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="Transmit message..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={currentDocumentId 
+                ? "Ask a question about the document..." 
+                : "Type your message..."}
               disabled={isLoading || !apiKey.trim()}
               className="message-input"
             />
             <button
               type="submit"
-              disabled={isLoading || !inputMessage.trim() || !apiKey.trim()}
+              disabled={isLoading || !input.trim() || !apiKey.trim()}
               className="send-button"
             >
               <Send className="w-4 h-4" />
