@@ -84,9 +84,23 @@ async def chat(request: ChatRequest):
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
     try:
-        # Read file content
-        content = await file.read()
-        text_content = content.decode("utf-8")
+        # Read file content in chunks to handle large files
+        content = b""
+        chunk_size = 1024 * 1024  # 1MB chunks
+        while True:
+            chunk = await file.read(chunk_size)
+            if not chunk:
+                break
+            content += chunk
+
+        # Check file size (10MB limit)
+        if len(content) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File too large. Maximum size is 10MB")
+
+        try:
+            text_content = content.decode("utf-8")
+        except UnicodeDecodeError:
+            raise HTTPException(status_code=400, detail="File must be a valid text document")
         
         # Generate a simple document ID (in production, use UUID)
         document_id = str(hash(text_content))
@@ -101,7 +115,10 @@ async def upload_file(file: UploadFile = File(...)):
         documents[document_id] = chunks
         
         return {"document_id": document_id, "chunk_count": len(chunks)}
+    except HTTPException as e:
+        raise e
     except Exception as e:
+        print(f"Error processing file: {str(e)}")  # Add logging
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/query")

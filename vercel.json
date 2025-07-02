@@ -10,7 +10,10 @@
     "routes": [
       { 
         "src": "/api/(.*)", 
-        "dest": "api/app.py"
+        "dest": "api/app.py",
+        "headers": {
+          "x-vercel-max-body-size": "10mb"
+        }
       },
       { 
         "src": "/(.*)", 
