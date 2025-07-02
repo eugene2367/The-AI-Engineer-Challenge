@@ -38,13 +38,16 @@ The frontend UI on Vercel fails when trying to upload a 5MB PDF file. This is li
 ## Testing Instructions
 
 ### Local Testing
-1. **Start the API locally**:
+1. **Start the API locally** (from root directory):
    ```bash
-   cd api
+   # Option 1: Use the convenience script (recommended)
+   python run_api.py
+   
+   # Option 2: Manual setup
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   python app.py
+   pip install -r api/requirements.txt
+   python run_api.py
    ```
 
 2. **Start the frontend locally**:

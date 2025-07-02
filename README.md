@@ -15,6 +15,7 @@ A **stunning, full-stack chat application** that lets you have real-time convers
 
 ### 🔥 Key Features
 - **💬 Real-time streaming chat** - Watch AI responses appear word by word!
+- **📄 Document upload & querying** - Upload files and ask questions about them!
 - **🎨 Beautiful, modern UI** - Gradient backgrounds, smooth animations, and responsive design
 - **⚙️ Smart configuration** - Customize system messages and manage API keys securely
 - **📱 Works everywhere** - Desktop, tablet, phone - it's all responsive!
@@ -32,6 +33,7 @@ A **stunning, full-stack chat application** that lets you have real-time convers
 - 🐍 **FastAPI** - Lightning-fast Python web framework
 - 🤖 **OpenAI API** - Powered by GPT-4.1-mini
 - 🔄 **Streaming responses** - Real-time AI interactions
+- 🧠 **Vector database** - Smart document search and retrieval
 
 **Deployment:**
 - ☁️ **Vercel** - Seamless deployment and hosting
@@ -42,7 +44,8 @@ A **stunning, full-stack chat application** that lets you have real-time convers
 2. **Click the settings icon** (⚙️) in the top-right corner
 3. **Enter your OpenAI API key** (get one from [OpenAI](https://platform.openai.com/))
 4. **Optionally customize** the system message to change the AI's personality
-5. **Start chatting!** 🎉
+5. **Upload a document** (text files up to 4.5MB) and ask questions about it!
+6. **Start chatting!** 🎉
 
 ## 🏗️ Project Structure
 
@@ -55,30 +58,98 @@ The-AI-Engineer-Challenge/
 ├── 🐍 api/                     # FastAPI backend
 │   ├── app.py                 # Main API server
 │   └── requirements.txt       # Python dependencies
+├── 🧠 aimakerspace/           # AI utilities and vector database
+├── 🚀 run_api.py              # Easy API startup script
+├── 🛠️ setup_dev.py            # One-click development setup
+├── 🧪 test_upload.py          # Upload testing script
 └── 📄 vercel.json             # Deployment configuration
 ```
+
+## 🔧 Quick Development Setup
+
+Want to run this locally? We've made it super easy! 🎉
+
+### Option 1: One-Click Setup (Recommended)
+```bash
+python3 setup_dev.py
+```
+
+### Option 2: Manual Setup
+```bash
+# 1. Set up Python environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r api/requirements.txt
+
+# 2. Install frontend dependencies
+npm install
+
+# 3. Start the API server
+python run_api.py
+
+# 4. Start the frontend (in a new terminal)
+cd frontend
+npm run dev
+```
+
+### 🧪 Testing Upload Functionality
+```bash
+# Test file uploads locally
+python test_upload.py
+
+# Test a specific file
+python test_upload.py path/to/your/file.txt
+```
+
+## 📁 File Upload Features
+
+### ✅ What Works
+- **Text files (.txt)** up to 4.5MB
+- **Real-time upload progress**
+- **Smart error handling** with detailed logging
+- **Document querying** - ask questions about uploaded content
+
+### ⚠️ Current Limitations
+- **PDF files**: Not supported yet (coming soon!)
+- **File size**: 4.5MB limit on Vercel (10MB locally)
+- **File types**: Only text files for now
+
+### 🔍 Troubleshooting Upload Issues
+If you're having trouble with file uploads, check out our detailed [Upload Troubleshooting Guide](UPLOAD_TROUBLESHOOTING.md)!
 
 ## 🎯 Challenge Completion
 
 This project demonstrates:
 - ✅ **Modern web development** with cutting-edge technologies
 - ✅ **AI integration** with real-time streaming
+- ✅ **Document processing** with vector search
 - ✅ **Beautiful UX/UI design** with attention to detail
 - ✅ **Full-stack development** from frontend to backend
 - ✅ **Cloud deployment** with Vercel
 - ✅ **Type safety** and best practices
+- ✅ **Comprehensive error handling** and debugging tools
 
 ## 🎉 What Makes This Special
 
 - **Real-time streaming** - No more waiting for complete responses!
+- **Document intelligence** - Upload files and get smart answers!
 - **Beautiful animations** - Smooth transitions and loading states
 - **Responsive design** - Works perfectly on any device
 - **Secure API handling** - Your keys are never stored on the server
 - **Modern architecture** - Built with the latest web technologies
+- **Developer-friendly** - Easy setup and comprehensive debugging tools
 
-## 🔧 Development Setup
+## 🚨 Known Issues & Solutions
 
-Want to run this locally? Check out the [frontend README](frontend/README.md) for detailed instructions!
+### File Upload Problems?
+- **5MB PDF failing?** That's Vercel's 4.5MB limit! Try a smaller file or convert to text
+- **Import errors?** Make sure you're running from the root directory with `python run_api.py`
+- **Need help?** Check the [troubleshooting guide](UPLOAD_TROUBLESHOOTING.md) or browser console logs
+
+### Development Issues?
+- **Module not found?** Use `python run_api.py` instead of running from the `api` directory
+- **Dependencies missing?** Run `python setup_dev.py` for automatic setup
+- **Port conflicts?** The API runs on port 8000, frontend on port 3000
 
 ---
 

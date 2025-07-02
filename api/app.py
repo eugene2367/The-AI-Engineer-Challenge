@@ -1,4 +1,9 @@
 # Import required FastAPI components for building the API
+import sys
+import os
+# Add parent directory to Python path to find aimakerspace module
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
