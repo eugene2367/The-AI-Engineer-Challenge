@@ -225,3 +225,6 @@ venv/
 .vscode/
 *.swp
 *.swo
+
+# Large binary files
+*.node
