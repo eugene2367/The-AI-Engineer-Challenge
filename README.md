@@ -74,6 +74,11 @@ Want to run this locally? We've made it super easy! 🎉
 python3 setup_dev.py
 ```
 
+**🐍 Python 3.13+ Users**: If you encounter compatibility issues, use:
+```bash
+python3 setup_python313.py
+```
+
 ### Option 2: Manual Setup
 ```bash
 # 1. Set up Python environment
@@ -149,6 +154,7 @@ This project demonstrates:
 ### Development Issues?
 - **Module not found?** Use `python run_api.py` instead of running from the `api` directory
 - **Dependencies missing?** Run `python setup_dev.py` for automatic setup
+- **Python 3.13 compatibility issues?** Use `python setup_python313.py` for one-by-one installation
 - **Port conflicts?** The API runs on port 8000, frontend on port 3000
 
 ---

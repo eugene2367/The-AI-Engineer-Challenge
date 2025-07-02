@@ -46,6 +46,11 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
 
     const formData = new FormData();
     formData.append('file', file);
+    // Add OpenAI API key from localStorage if available
+    const apiKey = localStorage.getItem('openai_api_key');
+    if (apiKey) {
+      formData.append('openai_api_key', apiKey);
+    }
 
     try {
       console.log('Sending upload request to /api/upload');

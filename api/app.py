@@ -4,7 +4,7 @@ import os
 # Add parent directory to Python path to find aimakerspace module
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 # Import Pydantic for data validation and settings management
@@ -37,9 +37,16 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers in requests
 )
 
-# Initialize our components
-chat_model = ChatOpenAI(model_name="gpt-4-turbo-preview")
+# Initialize our components (lazy initialization to avoid API key requirement at startup)
+chat_model = None
 vector_db = VectorDatabase()
+
+def get_chat_model():
+    """Get or create the chat model instance."""
+    global chat_model
+    if chat_model is None:
+        chat_model = ChatOpenAI(model_name="gpt-4-turbo-preview")
+    return chat_model
 
 # Store uploaded documents in memory (in production, use a proper database)
 documents = {}
@@ -56,6 +63,7 @@ class ChatRequest(BaseModel):
 class QueryRequest(BaseModel):
     query: str
     document_id: str
+    api_key: str  # OpenAI API key for authentication
 
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
@@ -71,7 +79,7 @@ async def chat(request: ChatRequest):
         async def generate():
             # Create a streaming chat completion request
             stream = client.chat.completions.create(
-                model=request.model,
+                model=request.model or "gpt-4-turbo-preview",
                 messages=[
                     {"role": "system", "content": request.developer_message},
                     {"role": "user", "content": request.user_message}
@@ -92,7 +100,7 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), openai_api_key: str = Form(None)):
     try:
         logger.info(f"Received file upload request: {file.filename}")
         logger.debug(f"Content-Type: {file.content_type}")
@@ -167,7 +175,7 @@ async def upload_file(file: UploadFile = File(...)):
         # Create embeddings and store in vector database
         try:
             logger.info("Storing embeddings in vector database...")
-            await vector_db.abuild_from_list(chunks)
+            await vector_db.abuild_from_list(chunks, api_key=openai_api_key)
             logger.info("Successfully stored embeddings in vector database")
         except Exception as e:
             logger.error(f"Failed to store embeddings: {str(e)}", exc_info=True)
@@ -234,8 +242,20 @@ async def query_document(request: QueryRequest):
         # Stream the response
         async def generate_response():
             try:
-                async for token in chat_model.astream(messages):
-                    yield f"data: {json.dumps({'token': token})}\n\n"
+                # Initialize OpenAI client with the provided API key
+                client = OpenAI(api_key=request.api_key)
+                
+                # Create a streaming chat completion request
+                stream = client.chat.completions.create(
+                    model="gpt-4-turbo-preview",
+                    messages=messages,
+                    stream=True
+                )
+                
+                # Yield each chunk of the response as it becomes available
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield f"data: {json.dumps({'token': chunk.choices[0].delta.content})}\n\n"
                 yield "data: [DONE]\n\n"
             except Exception as e:
                 logger.error(f"Error generating response: {str(e)}")
