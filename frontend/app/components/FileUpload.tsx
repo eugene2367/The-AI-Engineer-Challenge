@@ -10,41 +10,106 @@ interface FileUploadProps {
 export default function FileUpload({ onFileProcessed }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
 
     const file = acceptedFiles[0];
+    
+    // Enhanced logging for debugging
+    console.log('File upload started:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      sizeInMB: (file.size / (1024 * 1024)).toFixed(2)
+    });
+
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      setError('File size must be less than 10MB');
+      const errorMsg = 'File size must be less than 10MB';
+      console.error('File size validation failed:', errorMsg);
+      setError(errorMsg);
+      return;
+    }
+
+    // Check for Vercel's 4.5MB limit
+    if (file.size > 4.5 * 1024 * 1024) {
+      const warningMsg = 'Warning: File size exceeds Vercel\'s 4.5MB limit. Upload may fail.';
+      console.warn(warningMsg);
+      setError(warningMsg);
       return;
     }
 
     setIsUploading(true);
     setError(null);
+    setUploadProgress(0);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
+      console.log('Sending upload request to /api/upload');
+      
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Upload response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: 'Upload failed' }));
-        throw new Error(errorData.detail || `Upload failed with status ${response.status}`);
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorData = { detail: 'Upload failed' };
+        }
+        
+        const errorMessage = errorData.detail || `Upload failed with status ${response.status}`;
+        console.error('Upload failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorMessage,
+          errorData
+        });
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log('Upload successful:', data);
       onFileProcessed(true, data.document_id);
     } catch (err) {
-      console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload file. Please try again.');
+      console.error('Upload error:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
+      });
+      
+      let errorMessage = 'Failed to upload file. Please try again.';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('413')) {
+          errorMessage = 'File too large. Please use a smaller file (under 4.5MB for Vercel).';
+        } else if (err.message.includes('413')) {
+          errorMessage = 'File too large. Please use a smaller file.';
+        } else if (err.message.includes('timeout') || err.message.includes('fetch')) {
+          errorMessage = 'Upload timed out. This may be due to file size or network issues.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
       onFileProcessed(false);
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   }, [onFileProcessed]);
 
@@ -81,6 +146,9 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
             <div className="flex flex-col items-center space-y-2">
               <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
               <p className="text-slate-600">Uploading...</p>
+              {uploadProgress > 0 && (
+                <p className="text-sm text-slate-500">{uploadProgress}%</p>
+              )}
             </div>
           ) : isDragActive ? (
             <p className="text-blue-600 font-medium">Drop your file here</p>
@@ -90,7 +158,7 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
                 Drag and drop your file here, or click to select
               </p>
               <p className="text-sm text-slate-500">
-                Supported formats: TXT, PDF, DOC, DOCX (Max 10MB)
+                Supported formats: TXT, PDF, DOC, DOCX (Max 4.5MB for Vercel)
               </p>
             </div>
           )}
@@ -100,6 +168,9 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
         <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
           <p className="font-medium">Error uploading file:</p>
           <p>{error}</p>
+          <p className="mt-2 text-xs text-red-600">
+            Check the browser console for detailed error information.
+          </p>
         </div>
       )}
     </div>

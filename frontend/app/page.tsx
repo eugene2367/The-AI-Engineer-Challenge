@@ -20,6 +20,9 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [response, setResponse] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -30,9 +33,11 @@ export default function Home() {
     scrollToBottom()
   }, [messages])
 
-  const handleFileProcessed = (success: boolean, documentId?: string) => {
-    if (success && documentId) {
-      setCurrentDocumentId(documentId)
+  const handleFileProcessed = (success: boolean, docId?: string) => {
+    console.log('File processed:', { success, docId })
+    if (success && docId) {
+      setCurrentDocumentId(docId)
+      setError(null)
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         content: 'Document uploaded successfully! You can now ask questions about its contents.',
@@ -44,104 +49,76 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!currentDocumentId) {
+      setError('Please upload a document first')
+      return
+    }
+    if (!query.trim()) {
+      setError('Please enter a question')
+      return
+    }
 
-    const userMessage = input.trim()
-    setInput('')
-    setMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      content: userMessage,
-      role: 'user',
-      timestamp: new Date()
-    }])
     setIsLoading(true)
+    setError(null)
+    setResponse('')
 
     try {
-      const endpoint = currentDocumentId ? '/api/query' : '/api/chat'
-      const response = await fetch(endpoint, {
+      console.log('Sending query:', { currentDocumentId, query })
+      const response = await fetch('/api/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(currentDocumentId ? {
-          query: userMessage,
-          document_id: currentDocumentId
-        } : {
-          messages: messages.concat({
-            id: Date.now().toString(),
-            content: userMessage,
-            role: 'user',
-            timestamp: new Date()
-          })
-        }),
+        body: JSON.stringify({ currentDocumentId, query }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to get response')
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to query document' }))
+        throw new Error(errorData.detail || `Query failed with status ${response.status}`)
       }
 
-      if (response.headers.get('content-type')?.includes('text/event-stream')) {
-        // Handle streaming response
-        const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
-        let assistantMessage = ''
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('Failed to get response reader')
+      }
 
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          content: '',
-          role: 'assistant',
-          timestamp: new Date()
-        }])
+      // Read the stream
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-        while (reader) {
-          const { value, done } = await reader.read()
-          if (done) break
+        // Convert the chunk to text
+        const chunk = new TextDecoder().decode(value)
+        const lines = chunk.split('\n')
 
-          const chunk = decoder.decode(value)
-          const lines = chunk.split('\n')
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(5)
-              if (data === '[DONE]') continue
-
-              try {
-                const parsed = JSON.parse(data)
-                if (parsed.token) {
-                  assistantMessage += parsed.token
-                  setMessages(prev => [
-                    ...prev.slice(0, -1),
-                    {
-                      id: Date.now().toString(),
-                      content: assistantMessage,
-                      role: 'assistant',
-                      timestamp: new Date()
-                    }
-                  ])
-                }
-              } catch (e) {
-                console.error('Failed to parse chunk:', e)
+        // Process each line
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') {
+              console.log('Stream complete')
+              break
+            }
+            try {
+              const parsed = JSON.parse(data)
+              if (parsed.error) {
+                throw new Error(parsed.error)
+              }
+              if (parsed.token) {
+                setResponse(prev => prev + parsed.token)
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e)
+              if (e instanceof Error) {
+                setError(e.message)
               }
             }
           }
         }
-      } else {
-        const data = await response.json()
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          content: data.response,
-          role: 'assistant',
-          timestamp: new Date()
-        }])
       }
-    } catch (error) {
-      console.error('Error:', error)
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        content: 'Sorry, I encountered an error. Please try again.',
-        role: 'assistant',
-        timestamp: new Date()
-      }])
+    } catch (err) {
+      console.error('Error querying document:', err)
+      setError(err instanceof Error ? err.message : 'Failed to query document')
     } finally {
       setIsLoading(false)
     }
@@ -293,17 +270,15 @@ export default function Home() {
           <form onSubmit={handleSubmit} className="flex space-x-3">
             <input
               type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={currentDocumentId 
-                ? "Ask a question about the document..." 
-                : "Type your message..."}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Type your question here..."
               disabled={isLoading || !apiKey.trim()}
               className="message-input"
             />
             <button
               type="submit"
-              disabled={isLoading || !input.trim() || !apiKey.trim()}
+              disabled={isLoading || !query.trim() || !apiKey.trim()}
               className="send-button"
             >
               <Send className="w-4 h-4" />
@@ -319,6 +294,21 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        {response && (
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-2">Answer:</h2>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="whitespace-pre-wrap">{response}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
