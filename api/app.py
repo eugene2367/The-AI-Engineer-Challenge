@@ -178,10 +178,13 @@ async def upload_file(file: UploadFile = File(...), openai_api_key: str = Form(N
             await vector_db.abuild_from_list(chunks, api_key=openai_api_key)
             logger.info("Successfully stored embeddings in vector database")
         except Exception as e:
-            logger.error(f"Failed to store embeddings: {str(e)}", exc_info=True)
+            import traceback
+            tb = traceback.format_exc()
+            logger.error(f"Failed to store embeddings: {str(e)}\n{tb}", exc_info=True)
+            # Return detailed error info to the frontend (for debugging)
             raise HTTPException(
                 status_code=500, 
-                detail="Failed to process document. Please try again."
+                detail=f"Failed to process document: {type(e).__name__}: {str(e)}\n{tb}"
             )
         
         # Store the original chunks for reference
@@ -214,7 +217,8 @@ async def query_document(request: QueryRequest):
             relevant_chunks = vector_db.search_by_text(
                 request.query,
                 k=3,  # Get top 3 most relevant chunks
-                return_as_text=True
+                return_as_text=True,
+                api_key=request.api_key  # Pass the API key for embedding search
             )
             logger.info(f"Found {len(relevant_chunks)} relevant chunks")
             logger.debug(f"Chunks: {relevant_chunks}")
@@ -247,7 +251,7 @@ async def query_document(request: QueryRequest):
                 
                 # Create a streaming chat completion request
                 stream = client.chat.completions.create(
-                    model="gpt-4-turbo-preview",
+                    model="gpt-4.1-mini",
                     messages=messages,
                     stream=True
                 )

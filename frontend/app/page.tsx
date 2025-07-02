@@ -33,6 +33,12 @@ export default function Home() {
     scrollToBottom()
   }, [messages])
 
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem('openai_api_key', apiKey);
+    }
+  }, [apiKey]);
+
   const handleFileProcessed = (success: boolean, docId?: string) => {
     console.log('File processed:', { success, docId })
     if (success && docId) {
@@ -62,14 +68,26 @@ export default function Home() {
     setError(null)
     setResponse('')
 
+    // Add user message to chat
+    const userMessage = {
+      id: Date.now().toString() + '-user',
+      content: query,
+      role: 'user' as const,
+      timestamp: new Date(),
+    }
+    setMessages((prev) => [...prev, userMessage])
+
     try {
-      console.log('Sending query:', { currentDocumentId, query })
       const response = await fetch('/api/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ currentDocumentId, query }),
+        body: JSON.stringify({
+          document_id: currentDocumentId,
+          query,
+          api_key: apiKey,
+        }),
       })
 
       if (!response.ok) {
@@ -82,6 +100,7 @@ export default function Home() {
         throw new Error('Failed to get response reader')
       }
 
+      let aiContent = ''
       // Read the stream
       while (true) {
         const { done, value } = await reader.read()
@@ -96,7 +115,6 @@ export default function Home() {
           if (line.startsWith('data: ')) {
             const data = line.slice(6)
             if (data === '[DONE]') {
-              console.log('Stream complete')
               break
             }
             try {
@@ -105,7 +123,30 @@ export default function Home() {
                 throw new Error(parsed.error)
               }
               if (parsed.token) {
-                setResponse(prev => prev + parsed.token)
+                aiContent += parsed.token
+                // Update the last assistant message or add a new one
+                setMessages((prev) => {
+                  // If the last message is assistant, update it
+                  if (prev.length > 0 && prev[prev.length - 1].role === 'assistant') {
+                    const updated = [...prev]
+                    updated[updated.length - 1] = {
+                      ...updated[updated.length - 1],
+                      content: aiContent,
+                    }
+                    return updated
+                  } else {
+                    // Otherwise, add a new assistant message
+                    return [
+                      ...prev,
+                      {
+                        id: Date.now().toString() + '-ai',
+                        content: aiContent,
+                        role: 'assistant' as const,
+                        timestamp: new Date(),
+                      },
+                    ]
+                  }
+                })
               }
             } catch (e) {
               console.error('Error parsing chunk:', e)
@@ -121,6 +162,8 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Failed to query document')
     } finally {
       setIsLoading(false)
+      setQuery('')
+      scrollToBottom()
     }
   }
 
@@ -204,7 +247,7 @@ export default function Home() {
         <FileUpload onFileProcessed={handleFileProcessed} />
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4" style={{ maxHeight: '60vh' }}>
           {messages.length === 0 && (
             <div className="welcome-container">
               <div className="welcome-icon">
@@ -216,13 +259,19 @@ export default function Home() {
               </p>
             </div>
           )}
-          
-          {messages.map((message) => (
+          {messages.map((message, idx) => (
             <div
               key={message.id}
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`chat-message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}>
+              <div
+                className={`chat-message ${
+                  message.role === 'user'
+                    ? 'user-message bg-blue-600 text-white ml-auto'
+                    : 'assistant-message bg-slate-800 text-slate-200'
+                }`}
+                style={{ maxWidth: '80%' }}
+              >
                 <div className="flex items-start space-x-3">
                   {message.role === 'assistant' && (
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-600/80 to-slate-800/80 rounded-full flex items-center justify-center flex-shrink-0 mt-1 border border-slate-700">
@@ -230,7 +279,7 @@ export default function Home() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: message.content.replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>') }}></p>
+                    <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                     <p className="message-time">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -244,10 +293,9 @@ export default function Home() {
               </div>
             </div>
           ))}
-          
           {isLoading && (
             <div className="flex justify-start">
-              <div className="chat-message assistant-message">
+              <div className="chat-message assistant-message bg-slate-800 text-slate-200">
                 <div className="flex items-start space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-slate-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1 border-slate-700">
                     <Bot className="w-4 h-4 text-blue-300" />
@@ -261,7 +309,6 @@ export default function Home() {
               </div>
             </div>
           )}
-          
           <div ref={messagesEndRef} />
         </div>
 
@@ -298,15 +345,6 @@ export default function Home() {
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {response && (
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-2">Answer:</h2>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="whitespace-pre-wrap">{response}</p>
-            </div>
           </div>
         )}
       </div>
