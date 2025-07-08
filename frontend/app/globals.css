@@ -4,74 +4,124 @@
 
 @layer base {
   html {
-    @apply font-sans;
+    @apply font-mono;
     color-scheme: dark;
+    /* Bloomberg Terminal: Monospaced, high-contrast */
+    font-family: 'IBM Plex Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    background: #101415;
   }
-  
   body {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
-    animation: background-pan 15s ease infinite;
+    background: #101415;
+    background-image: linear-gradient(135deg, #101415 0%, #232b2b 50%, #101415 100%);
+    animation: matrix-glow 8s ease-in-out infinite alternate;
     overflow: hidden;
+    /* Bloomberg gridlines */
+    box-shadow: 0 0 0 1px #222 inset, 0 0 0 2px #333 inset;
   }
 }
 
 @layer components {
+  /* Bloomberg Terminal Header */
+  .bloomberg-header {
+    @apply w-full flex items-center justify-between px-8 py-3 bg-[#232b2b] border-b-4 border-yellow-400 shadow-lg;
+    font-size: 1.25rem;
+    color: #ffb800;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 8px #ffb80099;
+  }
+  /* Bloomberg Terminal Footer */
+  .bloomberg-footer {
+    @apply w-full flex items-center justify-center px-8 py-2 bg-[#232b2b] border-t-4 border-yellow-400;
+    font-size: 1rem;
+    color: #ffb800;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-shadow: 0 0 6px #ffb80066;
+  }
+  /* Bloomberg gridlines for main container */
+  .bloomberg-grid {
+    background-image: linear-gradient(to right, #222 1px, transparent 1px), linear-gradient(to bottom, #222 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
   /* Main Layout */
   .chat-container {
-    @apply max-w-4xl mx-auto h-screen flex flex-col bg-slate-900/50 backdrop-blur-xl border-x border-slate-700/50;
+    @apply max-w-4xl mx-auto h-screen flex flex-col bg-black/80 border-x border-green-700/50;
   }
   
   .chat-header {
-    @apply bg-slate-900/70 backdrop-blur-xl border-b border-slate-700/50 px-6 py-4 shadow-lg shadow-black/20 z-10;
+    @apply bg-black/90 border-b border-green-700/50 px-6 py-4 shadow-lg shadow-green-500/10 z-10;
   }
 
   .input-container {
-    @apply bg-slate-900/70 backdrop-blur-xl border-t border-slate-700/50 px-6 py-4 shadow-lg shadow-black/20;
+    @apply bg-black/90 border-t border-green-700/50 px-6 py-4 shadow-lg shadow-green-500/10;
   }
 
   /* Messages */
   .chat-message {
-    @apply p-4 rounded-2xl max-w-[85%] animate-slide-up bg-opacity-80 backdrop-blur-sm border border-slate-700/50;
+    @apply p-4 rounded-2xl max-w-[85%] bg-opacity-80 border border-green-700/70 shadow-green-500/20 font-mono;
+    background: rgba(16, 20, 21, 0.92);
+    color: #00ff41;
+    text-shadow: 0 0 4px #00ff41, 0 0 8px #00ff41;
+    border-color: #00ff41cc;
   }
   
   .user-message {
-    @apply bg-blue-600/80 text-white ml-auto shadow-lg shadow-blue-500/20;
+    @apply bg-black text-green-400 ml-auto border-green-400 shadow-green-400/30;
+    text-shadow: 0 0 4px #ffb800, 0 0 8px #ffb800;
+    color: #ffb800;
+    border-color: #ffb800cc;
+    background: rgba(16, 20, 21, 0.92);
   }
   
   .assistant-message {
-    @apply bg-slate-800/80 text-slate-200;
+    @apply bg-black text-green-300 border-green-700 shadow-green-500/20;
+    text-shadow: 0 0 4px #00ff41, 0 0 8px #00ff41;
+    color: #00ff41;
+    border-color: #00ff41cc;
+    background: rgba(16, 20, 21, 0.92);
   }
   
   /* Inputs & Buttons */
   .message-input {
-    @apply flex-1 px-4 py-3 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-800 disabled:text-slate-500 bg-slate-900/80 backdrop-blur-sm transition-all duration-300;
+    @apply flex-1 px-4 py-3 border border-green-700 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-black disabled:text-green-700 bg-black/80 font-mono text-green-300;
+    border-color: #00ff41;
+    text-shadow: 0 0 4px #00ff41, 0 0 8px #00ff41;
+    background: rgba(16, 20, 21, 0.92);
+    color: #00ff41;
   }
   
   .send-button {
-    @apply px-4 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40;
+    @apply px-4 py-3 bg-green-700 text-black rounded-2xl hover:bg-green-500 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-black disabled:bg-green-900 disabled:text-green-700 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center shadow-lg shadow-green-500/20 hover:shadow-green-500/40;
+    background: #00ff41;
+    color: #000;
+    font-weight: 700;
+    letter-spacing: 0.03em;
   }
 
   /* Settings Panel */
   .settings-panel {
-    @apply bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 px-6 py-4 animate-slide-up;
+    @apply bg-black/90 border-b border-green-700/50 px-6 py-4;
   }
   
   .settings-input, .settings-textarea {
-    @apply w-full px-4 py-3 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-900/80 backdrop-blur-sm resize-none transition-all duration-300;
+    @apply w-full px-4 py-3 border border-green-700 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-black/80 font-mono text-green-300;
   }
   
   /* Welcome Screen */
   .welcome-container {
-    @apply text-center py-16 px-6 animate-fade-in;
+    @apply text-center py-16 px-6;
+    color: #00ff41;
+    text-shadow: 0 0 8px #00ff41;
   }
   
   .welcome-icon {
-    @apply w-20 h-20 text-blue-400 mx-auto mb-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl flex items-center justify-center shadow-2xl shadow-black/30 border border-slate-700;
+    @apply w-20 h-20 text-green-400 mx-auto mb-6 bg-gradient-to-br from-black to-green-900 rounded-3xl flex items-center justify-center shadow-2xl shadow-green-500/30 border border-green-700;
   }
   
   /* Misc */
   .message-time {
-    @apply text-xs opacity-50 mt-2 font-medium;
+    @apply text-xs opacity-50 mt-2 font-medium text-green-600;
   }
   
   .typing-indicator {
@@ -79,7 +129,19 @@
   }
   
   .typing-dot {
-    @apply w-2 h-2 bg-slate-500 rounded-full animate-pulse;
+    @apply w-2 h-2 bg-green-500 rounded-full animate-pulse;
+  }
+  /* Bloomberg-style file upload */
+  .bloomberg-upload {
+    @apply border-2 border-dashed border-yellow-400 bg-[#181c1c] rounded-xl p-8 text-yellow-300 font-mono shadow-lg shadow-yellow-400/10;
+    transition: border 0.2s, background 0.2s;
+  }
+  .bloomberg-upload.drag-active {
+    @apply border-green-400 bg-green-900/20;
+    color: #00ff41;
+  }
+  .bloomberg-upload.error {
+    @apply border-red-400 bg-red-900/20 text-red-400;
   }
 }
 
@@ -103,10 +165,9 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes background-pan {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+@keyframes matrix-glow {
+  0% { box-shadow: 0 0 40px #00ff41 inset; }
+  100% { box-shadow: 0 0 80px #00ff41 inset; }
 }
 
 body {
@@ -121,12 +182,12 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(71, 85, 105, 0.5); /* slate-600 */
+  background: #00ff41;
   border-radius: 4px;
-  border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700 */
+  border: 1px solid #003b1a;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.5); /* slate-500 */
+  background: #00ff41cc;
 }
 html {
   scroll-behavior: smooth;

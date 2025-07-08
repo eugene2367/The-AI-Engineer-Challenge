@@ -168,186 +168,69 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="chat-container">
-        {/* Header */}
-        <header className="chat-header">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600/80 to-slate-800/80 rounded-2xl flex items-center justify-center shadow-lg border border-slate-700">
-                <Cpu className="w-6 h-6 text-blue-300 animate-pulse" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-100 tracking-tight">AI Mainframe</h1>
-                <p className="text-sm text-blue-400 font-medium">ONLINE</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-3 text-slate-400 hover:text-blue-400 hover:bg-slate-800/50 rounded-2xl transition-all duration-200 group"
-            >
-              <Settings className={`w-5 h-5 transition-transform duration-500 ${showSettings ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-        </header>
-
-        {/* Settings Panel */}
-        {showSettings && (
-          <div className="settings-panel">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-slate-200">System Configuration</h2>
-              <button onClick={() => setShowSettings(false)} className="p-2 text-slate-400 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3 flex items-center">
-                  <Key className="w-4 h-4 mr-2 text-blue-400" />
-                  OpenAI API Key
-                </label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-proj-..."
-                  className="settings-input"
-                />
-              </div>
-               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3 flex items-center">
-                  <Info className="w-4 h-4 mr-2 text-blue-400" />
-                  OpenAI Project ID
-                </label>
-                <input
-                  type="text"
-                  value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  placeholder="proj_..."
-                  className="settings-input"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-3">
-                  System Directive
-                </label>
-                <textarea
-                  value={developerMessage}
-                  onChange={(e) => setDeveloperMessage(e.target.value)}
-                  placeholder="You are a helpful AI assistant."
-                  rows={3}
-                  className="settings-textarea"
-                />
-              </div>
-            </div>
+    <div className="min-h-screen flex flex-col bloomberg-grid">
+      {/* Bloomberg Terminal Header */}
+      <header className="bloomberg-header">
+        <span>Bloomberg AI Terminal</span>
+        <span className="text-xs font-mono">Financial Document Q&A</span>
+      </header>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col justify-between">
+        {/* Welcome/Instructions for Financial Analysts */}
+        {messages.length === 0 && (
+          <div className="welcome-container">
+            <div className="welcome-icon">💹</div>
+            <h2 className="text-2xl font-bold mb-2">Welcome to the Bloomberg AI Terminal</h2>
+            <p className="mb-4">Upload earnings reports, financial statements, or analyst PDFs and ask questions about them. Get instant, AI-powered answers tailored for financial analysis.</p>
+            <p className="text-yellow-400">Supported: PDF, DOCX, TXT (max 4.5MB)</p>
           </div>
         )}
-
         {/* File Upload */}
-        <FileUpload onFileProcessed={handleFileProcessed} />
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4" style={{ maxHeight: '60vh' }}>
-          {messages.length === 0 && (
-            <div className="welcome-container">
-              <div className="welcome-icon">
-                <Sparkles className="w-10 h-10 text-blue-400" />
-              </div>
-              <h3 className="text-2xl font-semibold text-slate-100 mb-3 tracking-tight">AI Mainframe Initialized</h3>
-              <p className="text-slate-400 max-w-md mx-auto leading-relaxed">
-                System online. Awaiting input. Configure API credentials in the settings panel.
-              </p>
-            </div>
-          )}
-          {messages.map((message, idx) => (
+        <div className="my-4">
+          <FileUpload onFileProcessed={handleFileProcessed} />
+        </div>
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto px-4 py-2">
+          {messages.map((msg) => (
             <div
-              key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              key={msg.id}
+              className={`chat-message ${msg.role === 'user' ? 'user-message' : 'assistant-message'} my-2`}
             >
-              <div
-                className={`chat-message ${
-                  message.role === 'user'
-                    ? 'user-message bg-blue-600 text-white ml-auto'
-                    : 'assistant-message bg-slate-800 text-slate-200'
-                }`}
-                style={{ maxWidth: '80%' }}
-              >
-                <div className="flex items-start space-x-3">
-                  {message.role === 'assistant' && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-600/80 to-slate-800/80 rounded-full flex items-center justify-center flex-shrink-0 mt-1 border border-slate-700">
-                      <Bot className="w-4 h-4 text-blue-300" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                    <p className="message-time">
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  {message.role === 'user' && (
-                    <div className="w-8 h-8 bg-slate-800/80 rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-sm border border-slate-700">
-                      <User className="w-4 h-4 text-blue-300" />
-                    </div>
-                  )}
-                </div>
+              <div className="flex items-center justify-between">
+                <span>{msg.content}</span>
+                <span className="message-time">{msg.timestamp.toLocaleTimeString()}</span>
               </div>
             </div>
           ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="chat-message assistant-message bg-slate-800 text-slate-200">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-slate-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1 border-slate-700">
-                    <Bot className="w-4 h-4 text-blue-300" />
-                  </div>
-                  <div className="typing-indicator">
-                    <div className="typing-dot" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="typing-dot" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="typing-dot" style={{ animationDelay: '0.3s' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
           <div ref={messagesEndRef} />
         </div>
-
-        {/* Input Form */}
-        <div className="input-container">
-          <form onSubmit={handleSubmit} className="flex space-x-3">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Type your question here..."
-              disabled={isLoading || !apiKey.trim()}
-              className="message-input"
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !query.trim() || !apiKey.trim()}
-              className="send-button"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
-          
-          {!apiKey.trim() && (
-            <div className="mt-3 p-3 bg-amber-900/50 border border-amber-500/30 rounded-2xl">
-              <p className="text-sm text-amber-300 font-medium flex items-center">
-                <Info size={16} className="mr-2 flex-shrink-0" />
-                SYSTEM OFFLINE: API credentials required for connection.
-              </p>
-            </div>
-          )}
-        </div>
-
+        {/* Input Area */}
+        <form onSubmit={handleSubmit} className="input-container flex items-center space-x-2">
+          <input
+            className="message-input flex-1"
+            type="text"
+            placeholder="Ask a question about your uploaded document..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            disabled={isLoading || !currentDocumentId}
+          />
+          <button
+            className="send-button"
+            type="submit"
+            disabled={isLoading || !currentDocumentId}
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </form>
+        {/* Error Display */}
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700">{error}</p>
-          </div>
+          <div className="mt-2 p-2 bg-red-900 text-red-400 rounded font-mono text-xs">{error}</div>
         )}
-      </div>
+      </main>
+      {/* Bloomberg Terminal Footer */}
+      <footer className="bloomberg-footer">
+        &copy; {new Date().getFullYear()} Bloomberg AI Terminal &mdash; For Financial Analysts
+      </footer>
     </div>
   )
 } 

@@ -134,35 +134,31 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
     <div className="w-full max-w-2xl mx-auto p-4">
       <div
         {...getRootProps()}
-        className={`
-          border-2 border-dashed rounded-xl p-8
-          transition-all duration-200 ease-in-out
-          ${isDragActive 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-slate-300 hover:border-slate-400'
-          }
-          ${isUploading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
-          ${error ? 'border-red-300 bg-red-50' : ''}
-        `}
+        className={[
+          'bloomberg-upload',
+          isDragActive ? 'drag-active' : '',
+          isUploading ? 'opacity-50 cursor-wait' : 'cursor-pointer',
+          error ? 'error' : '',
+        ].join(' ')}
       >
         <input {...getInputProps()} />
         <div className="text-center">
           {isUploading ? (
             <div className="flex flex-col items-center space-y-2">
-              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              <p className="text-slate-600">Uploading...</p>
+              <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+              <p className="text-yellow-400">Uploading...</p>
               {uploadProgress > 0 && (
-                <p className="text-sm text-slate-500">{uploadProgress}%</p>
+                <p className="text-sm text-yellow-300">{uploadProgress}%</p>
               )}
             </div>
           ) : isDragActive ? (
-            <p className="text-blue-600 font-medium">Drop your file here</p>
+            <p className="text-green-400 font-medium">Drop your file here</p>
           ) : (
             <div className="space-y-2">
-              <p className="text-slate-600">
+              <p className="text-yellow-300">
                 Drag and drop your file here, or click to select
               </p>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-yellow-400">
                 Supported formats: TXT, PDF, DOC, DOCX (Max 4.5MB for Vercel)
               </p>
             </div>
@@ -170,10 +166,10 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
         </div>
       </div>
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+        <div className="mt-4 p-4 bg-red-900 border border-red-400 text-red-400 rounded-lg text-sm font-mono">
           <p className="font-medium">Error uploading file:</p>
           <p>{error}</p>
-          <p className="mt-2 text-xs text-red-600">
+          <p className="mt-2 text-xs text-red-400">
             Check the browser console for detailed error information.
           </p>
         </div>
