@@ -213,64 +213,11 @@ export default function Home() {
         <FileUpload onFileProcessed={handleFileProcessed} />
       </div>
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-2">
+      <div
+        className="flex-1 overflow-y-auto px-4 py-2 chat-scroll-area"
+        style={{ maxHeight: '60vh', minHeight: '200px' }}
+      >
         {messages.map((msg, idx) => (
           <div
             key={msg.id}
-            className={`chat-message ${msg.role === 'user' ? 'user-message' : 'assistant-message'} my-2 relative`}
-          >
-            <div className="flex items-center justify-between">
-              <span>{msg.content}</span>
-              <span className="message-time">{msg.timestamp.toLocaleTimeString()}</span>
-            </div>
-            {/* Copy button for last assistant message */}
-            {msg.role === 'assistant' && idx === lastAssistantIdx && (
-              <button
-                className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 border border-yellow-400 text-yellow-300 rounded font-mono text-xs flex items-center gap-1 hover:bg-yellow-400 hover:text-black transition"
-                title="Copy to clipboard"
-                onClick={() => {
-                  navigator.clipboard.writeText(msg.content)
-                }}
-              >
-                <Clipboard className="w-4 h-4 mr-1" /> Copy
-              </button>
-            )}
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      {/* Input Area */}
-      <form onSubmit={handleSubmit} className="input-container flex items-center space-x-2">
-        <input
-          className="message-input flex-1"
-          type="text"
-          placeholder="Ask a question about your uploaded document..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          disabled={isLoading || !currentDocumentId || !apiKey.trim()}
-        />
-        <button
-          className="send-button"
-          type="submit"
-          disabled={isLoading || !currentDocumentId || !apiKey.trim()}
-        >
-          <Send className="w-5 h-5" />
-        </button>
-      </form>
-      {/* API Key Warning */}
-      {!apiKey.trim() && (
-        <div className="mt-2 p-2 bg-yellow-900 text-yellow-300 rounded font-mono text-xs">
-          Please enter your OpenAI API key in Settings to use the app.
-        </div>
-      )}
-      {/* Error Display */}
-      {error && (
-        <div className="mt-2 p-2 bg-red-900 text-red-400 rounded font-mono text-xs">{error}</div>
-      )}
-      {/* Bloomberg Terminal Footer */}
-      <footer className="bloomberg-footer">
-        &copy; {new Date().getFullYear()} Bloomberg AI Terminal &mdash; For Financial Analysts
-      </footer>
-    </div>
-  )
-} 
+            className={`
