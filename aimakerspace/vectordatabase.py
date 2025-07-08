@@ -49,6 +49,10 @@ class VectorDatabase:
         # Returns None if key is missing
         return self.vectors.get(key, None)
 
+    def clear(self) -> None:
+        """Remove all vectors from the database."""
+        self.vectors.clear()
+
     async def abuild_from_list(self, list_of_text: List[str], api_key: Optional[str] = None) -> "VectorDatabase":
         embedding_model = EmbeddingModel()
         embeddings = await embedding_model.async_get_embeddings(list_of_text, api_key=api_key)

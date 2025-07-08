@@ -173,15 +173,16 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bloomberg-grid">
       {/* Bloomberg Terminal Header */}
-      <header className="bloomberg-header flex items-center justify-between">
+      <header className="bloomberg-header flex items-center justify-between sticky top-0 z-40">
         <span>Bloomberg AI Terminal</span>
         <span className="text-xs font-mono">Financial Document Q&A</span>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="ml-4 px-3 py-1 rounded bg-yellow-400 text-black font-mono font-bold text-xs border border-yellow-400 hover:bg-yellow-300 transition"
+          className="ml-4 p-2 rounded-full bg-yellow-400 text-black hover:bg-yellow-300 border border-yellow-400 transition flex items-center justify-center"
           title="Settings"
+          style={{ position: 'relative', zIndex: 50 }}
         >
-          {showSettings ? 'Close Settings' : 'Settings'}
+          <Settings className="w-6 h-6" />
         </button>
       </header>
       {/* Settings Panel */}
@@ -210,10 +211,18 @@ export default function Home() {
       )}
       {/* File Upload */}
       <div className="my-4">
-        <FileUpload onFileProcessed={handleFileProcessed} />
+        <FileUpload onFileProcessed={handleFileProcessed} disabled={!apiKey.trim()} />
+        {!apiKey.trim() && (
+          <div className="mt-2 p-2 bg-yellow-900 text-yellow-300 rounded font-mono text-xs text-center">
+            Please enter your OpenAI API key in Settings before uploading a document.
+          </div>
+        )}
       </div>
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-2">
+      <div
+        className="flex-1 overflow-y-auto px-4 py-2 chat-scroll-area"
+        style={{ maxHeight: '60vh', minHeight: '200px' }}
+      >
         {messages.map((msg, idx) => (
           <div
             key={msg.id}
@@ -273,4 +282,4 @@ export default function Home() {
       </footer>
     </div>
   )
-} 
+}

@@ -5,9 +5,10 @@ import { useDropzone } from 'react-dropzone';
 
 interface FileUploadProps {
   onFileProcessed: (success: boolean, documentId?: string) => void;
+  disabled?: boolean;
 }
 
-export default function FileUpload({ onFileProcessed }: FileUploadProps) {
+export default function FileUpload({ onFileProcessed, disabled }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -119,7 +120,7 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
   }, [onFileProcessed]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
+    onDrop: disabled ? () => {} : onDrop,
     accept: {
       'text/plain': ['.txt'],
       'application/pdf': ['.pdf'],
@@ -129,7 +130,8 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
       'application/csv': ['.csv'],
     },
     maxFiles: 1,
-    multiple: false
+    multiple: false,
+    disabled,
   });
 
   return (
@@ -139,11 +141,13 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
         className={[
           'bloomberg-upload',
           isDragActive ? 'drag-active' : '',
-          isUploading ? 'opacity-50 cursor-wait' : 'cursor-pointer',
+          isUploading ? 'opacity-50 cursor-wait' : '',
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
           error ? 'error' : '',
         ].join(' ')}
+        aria-disabled={disabled}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} disabled={disabled} />
         <div className="text-center">
           {isUploading ? (
             <div className="flex flex-col items-center space-y-2">
