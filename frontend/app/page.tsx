@@ -178,10 +178,11 @@ export default function Home() {
         <span className="text-xs font-mono">Financial Document Q&A</span>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="ml-4 px-3 py-1 rounded bg-yellow-400 text-black font-mono font-bold text-xs border border-yellow-400 hover:bg-yellow-300 transition"
+          className="ml-4 p-2 rounded-full bg-yellow-400 text-black hover:bg-yellow-300 border border-yellow-400 transition flex items-center justify-center"
           title="Settings"
+          style={{ position: 'absolute', right: 24, top: 16, zIndex: 50 }}
         >
-          {showSettings ? 'Close Settings' : 'Settings'}
+          <Settings className="w-6 h-6" />
         </button>
       </header>
       {/* Settings Panel */}
