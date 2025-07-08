@@ -170,63 +170,88 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bloomberg-grid">
       {/* Bloomberg Terminal Header */}
-      <header className="bloomberg-header">
+      <header className="bloomberg-header flex items-center justify-between">
         <span>Bloomberg AI Terminal</span>
         <span className="text-xs font-mono">Financial Document Q&A</span>
+        <button
+          onClick={() => setShowSettings(!showSettings)}
+          className="ml-4 px-3 py-1 rounded bg-yellow-400 text-black font-mono font-bold text-xs border border-yellow-400 hover:bg-yellow-300 transition"
+          title="Settings"
+        >
+          {showSettings ? 'Close Settings' : 'Settings'}
+        </button>
       </header>
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col justify-between">
-        {/* Welcome/Instructions for Financial Analysts */}
-        {messages.length === 0 && (
-          <div className="welcome-container">
-            <div className="welcome-icon">💹</div>
-            <h2 className="text-2xl font-bold mb-2">Welcome to the Bloomberg AI Terminal</h2>
-            <p className="mb-4">Upload earnings reports, financial statements, or analyst PDFs and ask questions about them. Get instant, AI-powered answers tailored for financial analysis.</p>
-            <p className="text-yellow-400">Supported: PDF, DOCX, TXT (max 4.5MB)</p>
-          </div>
-        )}
-        {/* File Upload */}
-        <div className="my-4">
-          <FileUpload onFileProcessed={handleFileProcessed} />
-        </div>
-        {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto px-4 py-2">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`chat-message ${msg.role === 'user' ? 'user-message' : 'assistant-message'} my-2`}
-            >
-              <div className="flex items-center justify-between">
-                <span>{msg.content}</span>
-                <span className="message-time">{msg.timestamp.toLocaleTimeString()}</span>
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-        {/* Input Area */}
-        <form onSubmit={handleSubmit} className="input-container flex items-center space-x-2">
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className="settings-panel flex flex-col gap-4 border-b-2 border-yellow-400 bg-[#181c1c] p-6 font-mono">
+          <label className="text-yellow-300 font-bold text-sm">OpenAI API Key</label>
           <input
-            className="message-input flex-1"
-            type="text"
-            placeholder="Ask a question about your uploaded document..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            disabled={isLoading || !currentDocumentId}
+            type="password"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            placeholder="sk-..."
+            className="settings-input bg-black/80 border-yellow-400 text-yellow-200 font-mono rounded px-4 py-2"
+            autoComplete="off"
           />
-          <button
-            className="send-button"
-            type="submit"
-            disabled={isLoading || !currentDocumentId}
+          <span className="text-xs text-yellow-400">Your key is stored locally in your browser and never sent to our server.</span>
+        </div>
+      )}
+      {/* Welcome/Instructions for Financial Analysts */}
+      {messages.length === 0 && (
+        <div className="welcome-container">
+          <div className="welcome-icon">💹</div>
+          <h2 className="text-2xl font-bold mb-2">Welcome to the Bloomberg AI Terminal</h2>
+          <p className="mb-4">Upload earnings reports, financial statements, or analyst PDFs and ask questions about them. Get instant, AI-powered answers tailored for financial analysis.</p>
+          <p className="text-yellow-400">Supported: PDF, DOCX, TXT (max 4.5MB)</p>
+        </div>
+      )}
+      {/* File Upload */}
+      <div className="my-4">
+        <FileUpload onFileProcessed={handleFileProcessed} />
+      </div>
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto px-4 py-2">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`chat-message ${msg.role === 'user' ? 'user-message' : 'assistant-message'} my-2`}
           >
-            <Send className="w-5 h-5" />
-          </button>
-        </form>
-        {/* Error Display */}
-        {error && (
-          <div className="mt-2 p-2 bg-red-900 text-red-400 rounded font-mono text-xs">{error}</div>
-        )}
-      </main>
+            <div className="flex items-center justify-between">
+              <span>{msg.content}</span>
+              <span className="message-time">{msg.timestamp.toLocaleTimeString()}</span>
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+      {/* Input Area */}
+      <form onSubmit={handleSubmit} className="input-container flex items-center space-x-2">
+        <input
+          className="message-input flex-1"
+          type="text"
+          placeholder="Ask a question about your uploaded document..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          disabled={isLoading || !currentDocumentId || !apiKey.trim()}
+        />
+        <button
+          className="send-button"
+          type="submit"
+          disabled={isLoading || !currentDocumentId || !apiKey.trim()}
+        >
+          <Send className="w-5 h-5" />
+        </button>
+      </form>
+      {/* API Key Warning */}
+      {!apiKey.trim() && (
+        <div className="mt-2 p-2 bg-yellow-900 text-yellow-300 rounded font-mono text-xs">
+          Please enter your OpenAI API key in Settings to use the app.
+        </div>
+      )}
+      {/* Error Display */}
+      {error && (
+        <div className="mt-2 p-2 bg-red-900 text-red-400 rounded font-mono text-xs">{error}</div>
+      )}
       {/* Bloomberg Terminal Footer */}
       <footer className="bloomberg-footer">
         &copy; {new Date().getFullYear()} Bloomberg AI Terminal &mdash; For Financial Analysts
