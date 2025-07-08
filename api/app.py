@@ -151,16 +151,33 @@ async def upload_file(file: UploadFile = File(...), openai_api_key: str = Form(N
                 detail="File too large for Vercel deployment. Maximum size is 4.5MB. Please use a smaller file or deploy to a different platform."
             )
 
-        # Try to decode the content
+        # Try to decode the content or extract from PDF
         try:
-            logger.info("Attempting to decode file content...")
-            text_content = content.decode("utf-8")
-            logger.info(f"Successfully decoded file content, length: {len(text_content)} characters")
-        except UnicodeDecodeError as e:
-            logger.error(f"Failed to decode file content: {str(e)}")
+            logger.info("Attempting to decode file content or extract from PDF...")
+            text_content = None
+            if file.content_type == "application/pdf" or (file.filename and file.filename.lower().endswith(".pdf")):
+                from PyPDF2 import PdfReader
+                import io
+                pdf_stream = io.BytesIO(content)
+                reader = PdfReader(pdf_stream)
+                extracted_text = []
+                for page in reader.pages:
+                    extracted_text.append(page.extract_text() or "")
+                text_content = "\n".join(extracted_text).strip()
+                if not text_content:
+                    logger.error("No extractable text found in PDF.")
+                    raise HTTPException(
+                        status_code=400,
+                        detail="No extractable text found in PDF. Please upload a text-based PDF."
+                    )
+            else:
+                text_content = content.decode("utf-8")
+            logger.info(f"Successfully obtained file content, length: {len(text_content)} characters")
+        except Exception as e:
+            logger.error(f"Failed to decode or extract file content: {str(e)}")
             raise HTTPException(
-                status_code=400, 
-                detail="File must be a valid text document. PDF files are not supported in this version."
+                status_code=400,
+                detail="File must be a valid text document or a text-based PDF. PDF files with only images are not supported."
             )
         
         # Generate a simple document ID (in production, use UUID)
