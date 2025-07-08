@@ -210,6 +210,16 @@ async def upload_file(file: UploadFile = File(...), openai_api_key: str = Form(N
         document_id = str(hash(text_content))
         logger.info(f"Generated document ID: {document_id}")
         
+        # Delete previous document/context before ingesting new one
+        if documents:
+            logger.info(f"Deleting previous document(s): {list(documents.keys())}")
+            documents.clear()
+            try:
+                vector_db.clear()  # Assuming VectorDatabase has a clear() method
+                logger.info("Cleared vector database context.")
+            except Exception as e:
+                logger.warning(f"Could not clear vector database: {e}")
+        
         # Chunk the text into smaller segments
         logger.info("Creating text chunks...")
         chunks = chunk_text(text_content)
