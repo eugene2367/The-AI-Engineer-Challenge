@@ -212,11 +212,6 @@ export default function Home() {
       {/* File Upload */}
       <div className="my-4">
         <FileUpload onFileProcessed={handleFileProcessed} disabled={!apiKey.trim()} />
-        {!apiKey.trim() && (
-          <div className="mt-2 p-2 bg-yellow-900 text-yellow-300 rounded font-mono text-xs text-center">
-            Please enter your OpenAI API key in Settings before uploading a document.
-          </div>
-        )}
       </div>
       {/* Chat Area */}
       <div className="flex-1 overflow-hidden px-4 py-2">
