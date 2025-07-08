@@ -185,7 +185,19 @@ async def upload_file(file: UploadFile = File(...), openai_api_key: str = Form(N
                         detail="No extractable text found in CSV. Please upload a valid CSV file."
                     )
             else:
-                text_content = content.decode("utf-8")
+                # Try decoding as utf-8, fallback to latin-1 for .txt files
+                try:
+                    text_content = content.decode("utf-8")
+                except UnicodeDecodeError as e:
+                    logger.warning(f"UTF-8 decode failed: {e}. Trying latin-1.")
+                    try:
+                        text_content = content.decode("latin-1")
+                    except Exception as e2:
+                        logger.error(f"Failed to decode .txt file as utf-8 or latin-1: {e2}")
+                        raise HTTPException(
+                            status_code=400,
+                            detail=".txt file could not be decoded as UTF-8 or Latin-1. Please check file encoding."
+                        )
             logger.info(f"Successfully obtained file content, length: {len(text_content)} characters")
         except Exception as e:
             logger.error(f"Failed to decode or extract file content: {str(e)}")
