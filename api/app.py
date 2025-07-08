@@ -151,9 +151,9 @@ async def upload_file(file: UploadFile = File(...), openai_api_key: str = Form(N
                 detail="File too large for Vercel deployment. Maximum size is 4.5MB. Please use a smaller file or deploy to a different platform."
             )
 
-        # Try to decode the content or extract from PDF
+        # Try to decode the content or extract from PDF/CSV
         try:
-            logger.info("Attempting to decode file content or extract from PDF...")
+            logger.info("Attempting to decode file content or extract from PDF/CSV...")
             text_content = None
             if file.content_type == "application/pdf" or (file.filename and file.filename.lower().endswith(".pdf")):
                 from PyPDF2 import PdfReader
@@ -169,6 +169,20 @@ async def upload_file(file: UploadFile = File(...), openai_api_key: str = Form(N
                     raise HTTPException(
                         status_code=400,
                         detail="No extractable text found in PDF. Please upload a text-based PDF."
+                    )
+            elif file.content_type in ["text/csv", "application/csv"] or (file.filename and file.filename.lower().endswith(".csv")):
+                import csv
+                import io
+                csv_stream = io.StringIO(content.decode("utf-8"))
+                reader = csv.reader(csv_stream)
+                rows = list(reader)
+                # Flatten CSV rows into a string for chunking
+                text_content = "\n".join([", ".join(row) for row in rows])
+                if not text_content:
+                    logger.error("No extractable text found in CSV.")
+                    raise HTTPException(
+                        status_code=400,
+                        detail="No extractable text found in CSV. Please upload a valid CSV file."
                     )
             else:
                 text_content = content.decode("utf-8")

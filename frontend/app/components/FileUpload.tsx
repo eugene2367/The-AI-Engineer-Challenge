@@ -124,7 +124,9 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
       'text/plain': ['.txt'],
       'application/pdf': ['.pdf'],
       'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/csv': ['.csv'],
+      'application/csv': ['.csv'],
     },
     maxFiles: 1,
     multiple: false
@@ -159,7 +161,7 @@ export default function FileUpload({ onFileProcessed }: FileUploadProps) {
                 Drag and drop your file here, or click to select
               </p>
               <p className="text-sm text-yellow-400">
-                Supported formats: TXT, PDF, DOC, DOCX (Max 4.5MB for Vercel)
+                Supported formats: TXT, PDF, DOC, DOCX, CSV (Max 4.5MB for Vercel)
               </p>
             </div>
           )}
