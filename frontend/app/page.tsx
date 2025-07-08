@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Settings, Key, Sparkles, MessageCircle, Info, Cpu, X } from 'lucide-react'
+import { Send, Bot, User, Settings, Key, Sparkles, MessageCircle, Info, Cpu, X, Clipboard } from 'lucide-react'
 import FileUpload from './components/FileUpload'
+import type React from 'react'
 
 interface Message {
   id: string
@@ -167,6 +168,8 @@ export default function Home() {
     }
   }
 
+  const lastAssistantIdx = messages.map((m: Message, i: number) => m.role === 'assistant' ? i : -1).filter((i: number) => i !== -1).pop()
+
   return (
     <div className="min-h-screen flex flex-col bloomberg-grid">
       {/* Bloomberg Terminal Header */}
@@ -211,15 +214,27 @@ export default function Home() {
       </div>
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto px-4 py-2">
-        {messages.map((msg) => (
+        {messages.map((msg, idx) => (
           <div
             key={msg.id}
-            className={`chat-message ${msg.role === 'user' ? 'user-message' : 'assistant-message'} my-2`}
+            className={`chat-message ${msg.role === 'user' ? 'user-message' : 'assistant-message'} my-2 relative`}
           >
             <div className="flex items-center justify-between">
               <span>{msg.content}</span>
               <span className="message-time">{msg.timestamp.toLocaleTimeString()}</span>
             </div>
+            {/* Copy button for last assistant message */}
+            {msg.role === 'assistant' && idx === lastAssistantIdx && (
+              <button
+                className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 border border-yellow-400 text-yellow-300 rounded font-mono text-xs flex items-center gap-1 hover:bg-yellow-400 hover:text-black transition"
+                title="Copy to clipboard"
+                onClick={() => {
+                  navigator.clipboard.writeText(msg.content)
+                }}
+              >
+                <Clipboard className="w-4 h-4 mr-1" /> Copy
+              </button>
+            )}
           </div>
         ))}
         <div ref={messagesEndRef} />
